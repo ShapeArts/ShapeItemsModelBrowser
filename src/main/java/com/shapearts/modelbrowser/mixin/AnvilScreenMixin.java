@@ -67,6 +67,16 @@ public abstract class AnvilScreenMixin extends ItemCombinerScreen<AnvilMenu> {
     }
 
     @Override
+    public boolean keyPressed(net.minecraft.client.input.KeyEvent event) {
+        // The vanilla inventory shortcut (E) must not close the screen while typing a search.
+        if (shape$visible && shape$search != null && shape$search.isFocused()) {
+            shape$search.keyPressed(event);
+            return true;
+        }
+        return super.keyPressed(event);
+    }
+
+    @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
         // Handle this at the screen before vanilla routes wheel input to its focused name box.
         if (shape$visible && shape$grid != null
