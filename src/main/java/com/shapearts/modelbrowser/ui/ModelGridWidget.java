@@ -102,7 +102,8 @@ public final class ModelGridWidget extends AbstractWidget {
                 String mark = expanded.contains(tile.group()) || !filter.isEmpty() ? "▼ " : "▶ ";
                 g.text(font, Component.literal(mark+tile.group()),x+7,y+7,0xFF202020);
             } else {
-                g.fill(x,y,x+tile.width()-2,y+CELL-2,0xFF373737);\n                g.fill(x+1,y+1,x+tile.width()-3,y+CELL-3,hover?0xFFB6B6B6:0xFF8B8B8B);
+                g.fill(x,y,x+tile.width()-2,y+CELL-2,0xFF373737); 
+                g.fill(x+1,y+1,x+tile.width()-3,y+CELL-3,hover?0xFFB6B6B6:0xFF8B8B8B);
                 ItemStack preview = source.copy();
                 if (!preview.isEmpty()) {
                     preview.set(DataComponents.CUSTOM_NAME,Component.literal(tile.entry().name()));
