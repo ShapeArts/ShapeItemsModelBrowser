@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "id": "shapeitemsmodelbrowser",
+  "version": "${version}",
+  "name": "Shape Items Model Browser",
+  "description": "Browse resource-pack anvil rename models in collapsible groups.",
+  "environment": "client",
+  "entrypoints": { "client": ["com.shapearts.modelbrowser.ShapeItemsModelBrowser"] },
+  "mixins": ["shapeitemsmodelbrowser.mixins.json"],
+  "depends": { "fabricloader": ">=0.19.5", "minecraft": "26.3", "java": ">=21" }
+}
