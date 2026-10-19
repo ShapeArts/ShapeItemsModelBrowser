@@ -35,7 +35,7 @@ public final class ModelGridWidget extends AbstractWidget {
     public ModelGridWidget(int x, int y, int width, int height, Consumer<String> chosen) {
         super(x, y, width, height, Component.literal("Shape model collection"));
         this.chosen = chosen;
-        this.columns = Math.max(3, (width - 16) / CELL);
+        this.columns = Math.max(1, (width - 16) / CELL);
     }
     public void setModels(ItemStack stack, List<ModelCatalog.Entry> models) {
         source = stack.copy();
