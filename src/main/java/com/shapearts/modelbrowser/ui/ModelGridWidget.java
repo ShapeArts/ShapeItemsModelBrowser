@@ -28,6 +28,8 @@ public final class ModelGridWidget extends AbstractWidget {
     private List<ModelCatalog.Entry> entries = List.of();
     private String filter = "";
     private int scroll = 0, totalHeight = 0;
+    private boolean draggingScrollbar = false;
+    private double scrollbarDragOffset = 0;
     private final int columns;
 
     private record Tile(String group, ModelCatalog.Entry entry, int x, int y, int width) {}
@@ -127,12 +129,51 @@ public final class ModelGridWidget extends AbstractWidget {
             int barHeight=Math.max(18,height*height/totalHeight);
             int track=height-barHeight;
             int pos=(int)(track*(scroll/(double)Math.max(1,totalHeight-height)));
-            g.fill(getRight()-4,getY()+pos,getRight()-2,getY()+pos+barHeight,0xFF777777);
+            g.fill(getRight()-9,getY(),getRight()-1,getBottom(),0xFF555555);
+            g.fill(getRight()-8,getY()+pos,getRight()-2,getY()+pos+barHeight,draggingScrollbar?0xFFE8E8E8:0xFFC6C6C6);
         }
+    }
+    private int maxScroll() { return Math.max(0, totalHeight - height); }
+    private int barHeight() { return Math.max(18, height * height / Math.max(height, totalHeight)); }
+    private boolean inScrollbar(double x, double y) {
+        return totalHeight > height && x >= getRight() - 9 && x < getRight()
+                && y >= getY() && y < getBottom();
+    }
+    private void moveScrollbar(double mouseY) {
+        int travel = Math.max(1, height - barHeight());
+        double offset = mouseY - getY() - scrollbarDragOffset;
+        scroll = (int) Math.round(Math.max(0, Math.min(travel, offset)) / travel * maxScroll());
+        clampScroll();
+    }
+    @Override
+    public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
+        if (draggingScrollbar) {
+            moveScrollbar(event.y());
+            return true;
+        }
+        return super.mouseDragged(event, dragX, dragY);
+    }
+    @Override
+    public boolean mouseReleased(MouseButtonEvent event) {
+        if (draggingScrollbar) {
+            draggingScrollbar = false;
+            return true;
+        }
+        return super.mouseReleased(event);
     }
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
         if (!isMouseOver(event.x(),event.y())) return false;
+        if (inScrollbar(event.x(), event.y())) {
+            int thumbHeight = barHeight();
+            int track = Math.max(1, height - thumbHeight);
+            int thumbY = getY() + (int) Math.round(track * (scroll / (double) Math.max(1, maxScroll())));
+            draggingScrollbar = true;
+            scrollbarDragOffset = event.y() >= thumbY && event.y() < thumbY + thumbHeight
+                    ? event.y() - thumbY : thumbHeight / 2.0;
+            moveScrollbar(event.y());
+            return true;
+        }
         int localX=(int)event.x()-getX(), localY=(int)event.y()-getY()+scroll;
         for (Tile tile : tiles) {
             int h=tile.entry()==null?HEADER:CELL;
