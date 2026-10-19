@@ -20,7 +20,7 @@ import java.util.function.Consumer;
 
 /** Scrollable 3D item grid, using Minecraft's own item renderer and the active resource pack. */
 public final class ModelGridWidget extends AbstractWidget {
-    private static final int CELL = 36, HEADER = 21;
+    private static final int CELL = 36, HEADER = 15;
     private final Set<String> expanded = new HashSet<>();
     private final Consumer<String> chosen;
     private final List<Tile> tiles = new ArrayList<>();
@@ -83,7 +83,7 @@ public final class ModelGridWidget extends AbstractWidget {
                             y + (index / columns)*CELL, cellWidth));
                     index++;
                 }
-                y += ((index + columns - 1)/columns)*CELL + 4;
+                y += ((index + columns - 1)/columns)*CELL + 2;
             }
         }
         totalHeight = y;
@@ -105,10 +105,10 @@ public final class ModelGridWidget extends AbstractWidget {
             if (y+Math.max(HEADER,CELL)<getY() || y>getBottom()) continue;
             boolean hover = mx>=x && mx<x+tile.width() && my>=y && my<y+(tile.entry()==null?HEADER:CELL);
             if (tile.entry()==null) {
-                g.fill(x,y,x+tile.width(),y+HEADER-2,hover?0xFFE4E4E4:0xFFC6C6C6);
-                g.fill(x,y+HEADER-3,x+tile.width(),y+HEADER-2,0xFF888888);
+                g.fill(x,y,x+tile.width(),y+HEADER-1,hover?0xFFE4E4E4:0xFFC6C6C6);
+                g.fill(x,y+HEADER-2,x+tile.width(),y+HEADER-1,0xFF888888);
                 String mark = expanded.contains(tile.group()) || !filter.isEmpty() ? "▼ " : "▶ ";
-                g.text(font, Component.literal(mark+tile.group()),x+7,y+7,0xFF202020);
+                g.text(font, Component.literal(mark+tile.group()),x+5,y+2,0xFF202020);
             } else {
                 g.fill(x,y,x+tile.width()-2,y+CELL-2,0xFF373737); 
                 g.fill(x+1,y+1,x+tile.width()-3,y+CELL-3,hover?0xFFB6B6B6:0xFF8B8B8B);
@@ -116,8 +116,8 @@ public final class ModelGridWidget extends AbstractWidget {
                 if (!preview.isEmpty()) {
                     preview.set(DataComponents.CUSTOM_NAME,Component.literal(tile.entry().name()));
                     g.pose().pushMatrix();
-                    g.pose().translate(x+(tile.width()-24)/2.0f,y+5);
-                    g.pose().scale(1.5f,1.5f);
+                    g.pose().translate(x+(tile.width()-32)/2.0f,y+1);
+                    g.pose().scale(2.0f,2.0f);
                     g.item(preview,0,0);
                     g.pose().popMatrix();
                 }
