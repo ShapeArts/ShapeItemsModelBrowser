@@ -116,8 +116,8 @@ public final class ModelGridWidget extends AbstractWidget {
                 if (!preview.isEmpty()) {
                     preview.set(DataComponents.CUSTOM_NAME,Component.literal(tile.entry().name()));
                     g.pose().pushMatrix();
-                    g.pose().translate(x+(tile.width()-20)/2.0f,y+8);
-                    g.pose().scale(1.25f,1.25f);
+                    g.pose().translate(x+(tile.width()-30)/2.0f,y+3);
+                    g.pose().scale(1.875f,1.875f);
                     g.item(preview,0,0);
                     g.pose().popMatrix();
                 }
