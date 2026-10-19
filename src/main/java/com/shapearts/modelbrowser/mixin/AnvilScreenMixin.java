@@ -38,7 +38,7 @@ public abstract class AnvilScreenMixin extends ItemCombinerScreen<AnvilMenu> {
     @Unique private ItemStack shape$last = ItemStack.EMPTY;
     @Unique private static final int SHAPE_ROWS = 7;
 
-    protected AnvilScreenMixin(AnvilMenu menu, Inventory inventory, Component title, net.minecraft.resources.ResourceLocation texture) {
+    protected AnvilScreenMixin(AnvilMenu menu, Inventory inventory, Component title, net.minecraft.resources.Identifier texture) {
         super(menu, inventory, title, texture);
     }
 
