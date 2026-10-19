@@ -108,7 +108,7 @@ public final class ModelGridWidget extends AbstractWidget {
                 g.fill(x,y,x+tile.width(),y+HEADER-1,hover?0xFFE4E4E4:0xFFC6C6C6);
                 g.fill(x,y+HEADER-2,x+tile.width(),y+HEADER-1,0xFF888888);
                 String mark = expanded.contains(tile.group()) || !filter.isEmpty() ? "▼ " : "▶ ";
-                g.text(font, Component.literal(mark+tile.group()),x+5,y+2,0xFF202020);
+                g.text(font, Component.literal(mark+tile.group()),x+5,y+2,0xFF202020,false);
             } else {
                 g.fill(x,y,x+tile.width()-2,y+CELL-2,0xFF373737); 
                 g.fill(x+1,y+1,x+tile.width()-3,y+CELL-3,hover?0xFFB6B6B6:0xFF8B8B8B);
@@ -116,8 +116,8 @@ public final class ModelGridWidget extends AbstractWidget {
                 if (!preview.isEmpty()) {
                     preview.set(DataComponents.CUSTOM_NAME,Component.literal(tile.entry().name()));
                     g.pose().pushMatrix();
-                    g.pose().translate(x+(tile.width()-32)/2.0f,y+1);
-                    g.pose().scale(2.0f,2.0f);
+                    g.pose().translate(x+(tile.width()-20)/2.0f,y+8);
+                    g.pose().scale(1.25f,1.25f);
                     g.item(preview,0,0);
                     g.pose().popMatrix();
                 }
