@@ -26,7 +26,7 @@ public abstract class GuiRendererMixin {
         index = 2
     )
     private int shape$higherResolutionItemModels(int original) {
-        if (Minecraft.getInstance().screen instanceof AnvilScreen) {
+        if (Minecraft.getInstance().gui.screen() instanceof AnvilScreen) {
             return Math.min(384, original * 3);
         }
         return original;
