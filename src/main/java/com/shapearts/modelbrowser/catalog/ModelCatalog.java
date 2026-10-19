@@ -5,7 +5,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.minecraft.client.Minecraft;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
 import net.minecraft.core.registries.BuiltInRegistries;
 
@@ -18,7 +18,7 @@ import java.util.Map;
 
 /** Reads active item definitions, not a hardcoded copy of the user's resource pack. */
 public final class ModelCatalog {
-    public record Entry(String name, ResourceLocation model) { }
+    public record Entry(String name, Identifier model) { }
     private static final Map<Item, List<Entry>> CACHE = new HashMap<>();
     private ModelCatalog() { }
 
@@ -28,8 +28,8 @@ public final class ModelCatalog {
     public static void invalidate() { CACHE.clear(); }
 
     private static List<Entry> load(Item item) {
-        ResourceLocation id = BuiltInRegistries.ITEM.getKey(item);
-        ResourceLocation file = ResourceLocation.fromNamespaceAndPath(id.getNamespace(), "items/" + id.getPath() + ".json");
+        Identifier id = BuiltInRegistries.ITEM.getKey(item);
+        Identifier file = Identifier.fromNamespaceAndPath(id.getNamespace(), "items/" + id.getPath() + ".json");
         var resource = Minecraft.getInstance().getResourceManager().getResource(file);
         if (resource.isEmpty()) return List.of();
         List<Entry> entries = new ArrayList<>();
@@ -54,7 +54,7 @@ public final class ModelCatalog {
                 if (!option.has("when") || !option.get("when").isJsonPrimitive()) continue;
                 try {
                     String name = option.get("when").getAsString();
-                    ResourceLocation modelId = ResourceLocation.parse(model.get("model").getAsString());
+                    Identifier modelId = Identifier.parse(model.get("model").getAsString());
                     out.add(new Entry(name, modelId));
                 } catch (Exception ignored) { }
             }
