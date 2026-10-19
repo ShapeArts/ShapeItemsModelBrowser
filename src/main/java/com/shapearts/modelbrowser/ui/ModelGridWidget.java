@@ -32,7 +32,29 @@ public final class ModelGridWidget extends AbstractWidget {
     private double scrollbarDragOffset = 0;
     private final int columns;
 
-    private record Tile(String group, ModelCatalog.Entry entry, int x, int y, int width) {}
+    private record Tile(String group, String label, int depth, ModelCatalog.Entry entry, int x, int y, int width) {}
+    private static final class Folder {
+        final String path, label;
+        final Map<String, Folder> children = new LinkedHashMap<>();
+        final List<ModelCatalog.Entry> models = new ArrayList<>();
+        Folder(String path, String label) { this.path=path; this.label=label; }
+    }
+    private static String label(String path) {
+        String[] words = path.split("_");
+        StringBuilder result = new StringBuilder();
+        for (String word : words) {
+            if (word.isEmpty()) continue;
+            if (!result.isEmpty()) result.append(" ");
+            result.append(Character.toUpperCase(word.charAt(0))).append(word.substring(1));
+        }
+        return result.toString();
+    }
+    private static String[] folders(ModelCatalog.Entry entry) {
+        String path = entry.model().getPath();
+        if (path.startsWith("item/")) path=path.substring(5);
+        int last=path.lastIndexOf('/');
+        return last < 0 ? new String[0] : path.substring(0,last).split("/");
+    }
 
     public ModelGridWidget(int x, int y, int width, int height, Consumer<String> chosen) {
         super(x, y, width, height, Component.literal("Shape model collection"));
@@ -44,7 +66,13 @@ public final class ModelGridWidget extends AbstractWidget {
         entries = models;
         scroll = 0;
         expanded.clear();
-        for (ModelCatalog.Entry entry : entries) expanded.add(group(entry.name()));
+        for (ModelCatalog.Entry entry : entries) {
+            String path = "";
+            for (String folder : folders(entry)) {
+                path = path.isEmpty() ? folder : path + "/" + folder;
+                expanded.add(path);
+            }
+        }
         layout();
     }
     public void setFilter(String text) {
@@ -52,42 +80,41 @@ public final class ModelGridWidget extends AbstractWidget {
         scroll = 0;
         layout();
     }
-    private static String group(String name) {
-        String[] known = {"Small Basket", "Medium Basket", "Tall Basket", "Closed Basket", "Market Basket",
-            "Small Serving Board", "Large Serving Board", "Cutting Board", "Serving Board",
-            "Small Crate", "Medium Crate", "Large Crate", "Short Pedestal", "Medium Pedestal",
-            "Tall Pedestal", "Hanging Sack", "Hanging Rope", "Barrel Top", "Flat Plate", "Plate Kit"};
-        String lowered = name.toLowerCase(Locale.ROOT);
-        String best = "";
-        for (String prefix : known) if (lowered.startsWith(prefix.toLowerCase(Locale.ROOT)) && prefix.length() > best.length()) best = prefix;
-        if (!best.isEmpty()) return best;
-        String[] parts = name.split(" ");
-        return parts.length > 1 ? parts[0] + " " + parts[1] : name;
-    }
     private void layout() {
         tiles.clear();
-        Map<String,List<ModelCatalog.Entry>> grouped = new LinkedHashMap<>();
+        Folder root = new Folder("", "");
         for (ModelCatalog.Entry e : entries) {
-            if (!e.name().toLowerCase(Locale.ROOT).contains(filter)) continue;
-            grouped.computeIfAbsent(group(e.name()), unused -> new ArrayList<>()).add(e);
-        }
-        int y = 4;
-        int cellWidth = Math.max(18, (width - 12) / columns);
-        for (var group : grouped.entrySet()) {
-            tiles.add(new Tile(group.getKey(), null, 4, y, width - 8));
-            y += HEADER;
-            if (expanded.contains(group.getKey()) || !filter.isEmpty()) {
-                int index = 0;
-                for (var e : group.getValue()) {
-                    tiles.add(new Tile(group.getKey(), e, 6 + (index % columns)*cellWidth,
-                            y + (index / columns)*CELL, cellWidth));
-                    index++;
-                }
-                y += ((index + columns - 1)/columns)*CELL + 2;
+            if (!e.name().toLowerCase(Locale.ROOT).contains(filter)
+                && !e.model().getPath().toLowerCase(Locale.ROOT).contains(filter)) continue;
+            Folder current = root;
+            String full = "";
+            for (String segment : folders(e)) {
+                full = full.isEmpty() ? segment : full + "/" + segment;
+                final String key=full, visible=label(segment);
+                current = current.children.computeIfAbsent(segment, ignored -> new Folder(key,visible));
             }
+            current.models.add(e);
         }
-        totalHeight = y;
+        totalHeight = layoutFolder(root, 0, 4);
         clampScroll();
+    }
+    private int layoutFolder(Folder root, int depth, int position) {
+        int y = position;
+        if (!root.path.isEmpty()) {
+            tiles.add(new Tile(root.path, root.label, depth, null, 4, y, width - 13));
+            y += HEADER;
+            if (!expanded.contains(root.path) && filter.isEmpty()) return y;
+        }
+        int cellWidth = Math.max(18, (width - 16) / columns);
+        int index = 0;
+        for (ModelCatalog.Entry e : root.models) {
+            tiles.add(new Tile(root.path, "",depth,e,6 + (index % columns)*cellWidth,
+                y + (index / columns)*CELL,cellWidth));
+            index++;
+        }
+        if (index > 0) y += ((index + columns - 1)/columns)*CELL + 2;
+        for (Folder child : root.children.values()) y = layoutFolder(child,depth+1,y);
+        return y;
     }
     private void clampScroll() { scroll = Math.max(0, Math.min(scroll, Math.max(0,totalHeight-height))); }
     @Override
@@ -108,7 +135,7 @@ public final class ModelGridWidget extends AbstractWidget {
                 g.fill(x,y,x+tile.width(),y+HEADER-1,hover?0xFFE4E4E4:0xFFC6C6C6);
                 g.fill(x,y+HEADER-2,x+tile.width(),y+HEADER-1,0xFF888888);
                 String mark = expanded.contains(tile.group()) || !filter.isEmpty() ? "▼ " : "▶ ";
-                g.text(font, Component.literal(mark+tile.group()),x+5,y+2,0xFF202020,false);
+                g.text(font, Component.literal(mark+tile.label()),x+5+Math.min(tile.depth()-1,4)*8,y+2,0xFF202020,false);
             } else {
                 g.fill(x,y,x+tile.width()-2,y+CELL-2,0xFF373737); 
                 g.fill(x+1,y+1,x+tile.width()-3,y+CELL-3,hover?0xFFB6B6B6:0xFF8B8B8B);
