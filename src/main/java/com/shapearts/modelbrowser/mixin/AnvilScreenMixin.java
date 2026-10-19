@@ -66,6 +66,16 @@ public abstract class AnvilScreenMixin extends ItemCombinerScreen<AnvilMenu> {
         shape$refresh();
     }
 
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
+        // Handle this at the screen before vanilla routes wheel input to its focused name box.
+        if (shape$visible && shape$grid != null
+                && shape$grid.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount)) {
+            return true;
+        }
+        return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
+    }
+
     @Inject(method = "containerTick", at = @At("TAIL"))
     private void shape$tick(CallbackInfo ci) {
         ItemStack stack = menu.getSlot(0).getItem();
