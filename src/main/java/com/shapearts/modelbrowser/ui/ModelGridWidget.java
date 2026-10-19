@@ -20,7 +20,7 @@ import java.util.function.Consumer;
 
 /** Scrollable 3D item grid, using Minecraft's own item renderer and the active resource pack. */
 public final class ModelGridWidget extends AbstractWidget {
-    private static final int CELL = 38, HEADER = 23;
+    private static final int CELL = 22, HEADER = 21;
     private final Set<String> expanded = new HashSet<>();
     private final Consumer<String> chosen;
     private final List<Tile> tiles = new ArrayList<>();
@@ -90,8 +90,7 @@ public final class ModelGridWidget extends AbstractWidget {
     private void clampScroll() { scroll = Math.max(0, Math.min(scroll, Math.max(0,totalHeight-height))); }
     @Override
     protected void extractWidgetRenderState(GuiGraphicsExtractor g, int mx, int my, float delta) {
-        g.fill(getX(),getY(),getRight(),getBottom(),0xEE1C2027);
-        g.outline(getX(),getY(),width,height,0xFF656D7B);
+        // Classic Minecraft inventory palette: light grey frame, recessed grey slots.\n        g.fill(getX(),getY(),getRight(),getBottom(),0xFFC6C6C6);\n        g.outline(getX(),getY(),width,height,0xFF373737);
         g.enableScissor(getX()+2,getY()+2,getRight()-2,getBottom()-2);
         var font = Minecraft.getInstance().font;
         for (Tile tile : tiles) {
@@ -99,15 +98,15 @@ public final class ModelGridWidget extends AbstractWidget {
             if (y+Math.max(HEADER,CELL)<getY() || y>getBottom()) continue;
             boolean hover = mx>=x && mx<x+tile.width() && my>=y && my<y+(tile.entry()==null?HEADER:CELL);
             if (tile.entry()==null) {
-                g.fill(x,y,x+tile.width(),y+HEADER-2,hover?0xFF535B6B:0xFF363D49);
+                g.fill(x,y,x+tile.width(),y+HEADER-2,hover?0xFFAAAAAA:0xFF8B8B8B);
                 String mark = expanded.contains(tile.group()) || !filter.isEmpty() ? "▼ " : "▶ ";
-                g.text(font, Component.literal(mark+tile.group()),x+7,y+7,0xFFFFFFFF);
+                g.text(font, Component.literal(mark+tile.group()),x+7,y+7,0xFF202020);
             } else {
-                g.fill(x,y,x+tile.width()-3,y+CELL-3,hover?0xFF5E718D:0xFF303641);
+                g.fill(x,y,x+tile.width()-2,y+CELL-2,0xFF373737);\n                g.fill(x+1,y+1,x+tile.width()-3,y+CELL-3,hover?0xFFB6B6B6:0xFF8B8B8B);
                 ItemStack preview = source.copy();
                 if (!preview.isEmpty()) {
                     preview.set(DataComponents.CUSTOM_NAME,Component.literal(tile.entry().name()));
-                    g.item(preview,x+(tile.width()-19)/2,y+4);
+                    g.item(preview,x+(tile.width()-16)/2,y+2);
                 }
                 if (hover) g.setTooltipForNextFrame(Component.literal(tile.entry().name()),mx,my);
             }
@@ -117,7 +116,7 @@ public final class ModelGridWidget extends AbstractWidget {
             int barHeight=Math.max(18,height*height/totalHeight);
             int track=height-barHeight;
             int pos=(int)(track*(scroll/(double)Math.max(1,totalHeight-height)));
-            g.fill(getRight()-4,getY()+pos,getRight()-2,getY()+pos+barHeight,0xFFB8C5D9);
+            g.fill(getRight()-4,getY()+pos,getRight()-2,getY()+pos+barHeight,0xFF777777);
         }
     }
     @Override
@@ -139,7 +138,7 @@ public final class ModelGridWidget extends AbstractWidget {
     @Override
     public boolean mouseScrolled(double mx,double my,double dx,double dy) {
         if (!isMouseOver(mx,my)) return false;
-        scroll -= (int)Math.round(dy*28);
+        scroll -= (int)Math.round(dy*18);
         clampScroll();
         return true;
     }
