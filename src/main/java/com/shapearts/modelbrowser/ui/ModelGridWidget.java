@@ -20,7 +20,7 @@ import java.util.function.Consumer;
 
 /** Scrollable 3D item grid, using Minecraft's own item renderer and the active resource pack. */
 public final class ModelGridWidget extends AbstractWidget {
-    private static final int CELL = 22, HEADER = 21;
+    private static final int CELL = 36, HEADER = 21;
     private final Set<String> expanded = new HashSet<>();
     private final Consumer<String> chosen;
     private final List<Tile> tiles = new ArrayList<>();
@@ -35,7 +35,7 @@ public final class ModelGridWidget extends AbstractWidget {
     public ModelGridWidget(int x, int y, int width, int height, Consumer<String> chosen) {
         super(x, y, width, height, Component.literal("Shape model collection"));
         this.chosen = chosen;
-        this.columns = Math.max(1, (width - 16) / CELL);
+        this.columns = 5;
     }
     public void setModels(ItemStack stack, List<ModelCatalog.Entry> models) {
         source = stack.copy();
@@ -70,7 +70,7 @@ public final class ModelGridWidget extends AbstractWidget {
             grouped.computeIfAbsent(group(e.name()), unused -> new ArrayList<>()).add(e);
         }
         int y = 4;
-        int cellWidth = Math.max(CELL, (width - 12) / columns);
+        int cellWidth = Math.max(18, (width - 12) / columns);
         for (var group : grouped.entrySet()) {
             tiles.add(new Tile(group.getKey(), null, 4, y, width - 8));
             y += HEADER;
@@ -90,7 +90,12 @@ public final class ModelGridWidget extends AbstractWidget {
     private void clampScroll() { scroll = Math.max(0, Math.min(scroll, Math.max(0,totalHeight-height))); }
     @Override
     protected void extractWidgetRenderState(GuiGraphicsExtractor g, int mx, int my, float delta) {
-        // Classic Minecraft inventory palette: light grey frame, recessed grey slots.\n        g.fill(getX(),getY(),getRight(),getBottom(),0xFFC6C6C6);\n        g.outline(getX(),getY(),width,height,0xFF373737);
+        // Classic vanilla container frame: raised pale top/left and recessed bottom/right.
+        g.fill(getX(),getY(),getRight(),getBottom(),0xFFC6C6C6);
+        g.fill(getX(),getY(),getRight(),getY()+2,0xFFFFFFFF);
+        g.fill(getX(),getY(),getX()+2,getBottom(),0xFFFFFFFF);
+        g.fill(getX(),getBottom()-2,getRight(),getBottom(),0xFF555555);
+        g.fill(getRight()-2,getY(),getRight(),getBottom(),0xFF555555);
         g.enableScissor(getX()+2,getY()+2,getRight()-2,getBottom()-2);
         var font = Minecraft.getInstance().font;
         for (Tile tile : tiles) {
@@ -98,7 +103,8 @@ public final class ModelGridWidget extends AbstractWidget {
             if (y+Math.max(HEADER,CELL)<getY() || y>getBottom()) continue;
             boolean hover = mx>=x && mx<x+tile.width() && my>=y && my<y+(tile.entry()==null?HEADER:CELL);
             if (tile.entry()==null) {
-                g.fill(x,y,x+tile.width(),y+HEADER-2,hover?0xFFAAAAAA:0xFF8B8B8B);
+                g.fill(x,y,x+tile.width(),y+HEADER-2,hover?0xFFE4E4E4:0xFFC6C6C6);
+                g.fill(x,y+HEADER-3,x+tile.width(),y+HEADER-2,0xFF888888);
                 String mark = expanded.contains(tile.group()) || !filter.isEmpty() ? "▼ " : "▶ ";
                 g.text(font, Component.literal(mark+tile.group()),x+7,y+7,0xFF202020);
             } else {
@@ -107,7 +113,11 @@ public final class ModelGridWidget extends AbstractWidget {
                 ItemStack preview = source.copy();
                 if (!preview.isEmpty()) {
                     preview.set(DataComponents.CUSTOM_NAME,Component.literal(tile.entry().name()));
-                    g.item(preview,x+(tile.width()-16)/2,y+2);
+                    g.pose().pushMatrix();
+                    g.pose().translate(x+(tile.width()-24)/2.0f,y+5);
+                    g.pose().scale(1.5f,1.5f);
+                    g.item(preview,0,0);
+                    g.pose().popMatrix();
                 }
                 if (hover) g.setTooltipForNextFrame(Component.literal(tile.entry().name()),mx,my);
             }
