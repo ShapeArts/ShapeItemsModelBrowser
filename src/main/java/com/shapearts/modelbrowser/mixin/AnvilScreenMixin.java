@@ -42,7 +42,7 @@ public abstract class AnvilScreenMixin extends ItemCombinerScreen<AnvilMenu> {
         super(menu, inventory, title, texture);
     }
 
-    @Inject(method = "init", at = @At("TAIL"))
+    @Inject(method = "subInit", at = @At("TAIL"))
     private void shape$init(CallbackInfo ci) {
         shape$toggle = Button.builder(Component.literal("Models"), b -> {
             shape$show = !shape$show;
