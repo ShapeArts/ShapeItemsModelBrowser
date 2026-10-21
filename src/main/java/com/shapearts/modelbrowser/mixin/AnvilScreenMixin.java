@@ -35,12 +35,12 @@ public abstract class AnvilScreenMixin extends ItemCombinerScreen<AnvilMenu> {
     private void shape$init(CallbackInfo ci) {
         // Vanilla's name box normally cannot lose focus, stealing Backspace from other fields.
         if (name != null) name.setCanLoseFocus(true);
-        int panelWidth = Math.min(330, Math.max(170, leftPos - 8));
+        int panelWidth = Math.min(350, Math.max(220, leftPos - 8));
         int x = Math.max(2,leftPos-panelWidth-5);
-        int panelHeight = Math.max(95,height-24);
+        int panelHeight = Math.max(230,height-12);
         int top = Math.max(4,(height-panelHeight)/2);
 
-        shape$grid = new ModelGridWidget(x,top+49,panelWidth,Math.max(38,panelHeight-51),text -> {
+        shape$grid = new ModelGridWidget(x,top,panelWidth,panelHeight,text -> {
             if (name != null) {
                 name.setValue(text);
                 name.setFocused(true);
@@ -48,21 +48,8 @@ public abstract class AnvilScreenMixin extends ItemCombinerScreen<AnvilMenu> {
             }
         });
         addRenderableWidget(shape$grid);
-        shape$search = new EditBox(font,x+6,top+25,panelWidth-12,18,Component.literal("Search models"));
-        shape$search.setHint(Component.literal("Search models..."));
-        shape$search.setResponder(value -> shape$grid.setFilter(value));
-        shape$search.setCanLoseFocus(true);
-        addRenderableWidget(shape$search);
-        shape$toggle = Button.builder(Component.literal("Models"),button -> {
-            shape$visible = !shape$visible;
-            shape$grid.visible = shape$visible;
-            shape$search.visible = shape$visible;
-            shape$grid.active = shape$visible;
-            shape$search.active = shape$visible;
-            shape$toggle.setMessage(Component.literal(shape$visible?"Hide Models":"Show Models"));
-            if (!shape$visible) this.setFocused(name);
-        }).bounds(x,top,Math.min(116,panelWidth),20).build();
-        addRenderableWidget(shape$toggle);
+        // Reference layout deliberately contains no search box or toggle.
+        // The model browser occupies its own left panel; the anvil remains usable.
         shape$refresh();
     }
 
