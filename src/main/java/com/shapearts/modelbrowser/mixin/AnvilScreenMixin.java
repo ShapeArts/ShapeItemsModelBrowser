@@ -35,7 +35,7 @@ public abstract class AnvilScreenMixin extends ItemCombinerScreen<AnvilMenu> {
     private void shape$init(CallbackInfo ci) {
         // Vanilla's name box normally cannot lose focus, stealing Backspace from other fields.
         if (name != null) name.setCanLoseFocus(true);
-        int panelWidth = Math.min(214, Math.max(170, leftPos - 8));
+        int panelWidth = Math.min(330, Math.max(170, leftPos - 8));
         int x = Math.max(2,leftPos-panelWidth-5);
         int panelHeight = Math.max(95,height-24);
         int top = Math.max(4,(height-panelHeight)/2);
