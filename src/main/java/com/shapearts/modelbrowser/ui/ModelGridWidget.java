@@ -20,7 +20,7 @@ import java.util.function.Consumer;
 
 /** Scrollable 3D item grid, using Minecraft's own item renderer and the active resource pack. */
 public final class ModelGridWidget extends AbstractWidget {
-    private static final int CELL = 36, HEADER = 25;
+    private static final int CELL = 51, HEADER = 30;
     private final Set<String> expanded = new HashSet<>();
     private final Consumer<String> chosen;
     private final List<Tile> tiles = new ArrayList<>();
@@ -165,9 +165,13 @@ public final class ModelGridWidget extends AbstractWidget {
                 g.fill(x+2,y+2,right-2,y+4,0xFF747474);
                 g.fill(x+2,bottom-4,right-2,bottom-2,0xFF191919);
                 // A placeholder glyph instead of low-resolution item snapshots.
-                int cx=x+(tile.width()-2)/2, cy=y+12;
+                int cx=x+(tile.width()-2)/2, cy=y+17;
                 g.fill(cx-5,cy-5,cx+5,cy+5,0xFF9A9A9A);
                 g.fill(cx-5,cy-5,cx+4,cy-3,0xFFCFCFCF);
+                String text=tile.entry().name();
+                int maxWidth=Math.max(10,tile.width()-7);
+                if(font.width(text)>maxWidth) text=font.plainSubstrByWidth(text,maxWidth-8)+"…";
+                g.text(font,Component.literal(text),x+4,y+CELL-15,0xFFEAEAEA,false);
                 if (hover) g.setTooltipForNextFrame(Component.literal(tile.entry().name()),mx,my);
             }
         }
