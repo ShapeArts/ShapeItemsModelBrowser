@@ -20,7 +20,7 @@ import java.util.function.Consumer;
 
 /** Scrollable 3D item grid, using Minecraft's own item renderer and the active resource pack. */
 public final class ModelGridWidget extends AbstractWidget {
-    private static final int CELL = 36, HEADER = 15;
+    private static final int CELL = 36, HEADER = 25;
     private final Set<String> expanded = new HashSet<>();
     private final Consumer<String> chosen;
     private final List<Tile> tiles = new ArrayList<>();
@@ -101,11 +101,11 @@ public final class ModelGridWidget extends AbstractWidget {
     private int layoutFolder(Folder root, int depth, int position) {
         int y = position;
         if (!root.path.isEmpty()) {
-            tiles.add(new Tile(root.path, root.label, depth, null, 4, y, width - 13));
+            tiles.add(new Tile(root.path, root.label, depth, null, 4, y, width - 17));
             y += HEADER;
             if (!expanded.contains(root.path) && filter.isEmpty()) return y;
         }
-        int cellWidth = Math.max(18, (width - 16) / columns);
+        int cellWidth = Math.max(18, (width - 21) / columns);
         int index = 0;
         for (ModelCatalog.Entry e : root.models) {
             tiles.add(new Tile(root.path, "",depth,e,6 + (index % columns)*cellWidth,
@@ -119,35 +119,55 @@ public final class ModelGridWidget extends AbstractWidget {
     private void clampScroll() { scroll = Math.max(0, Math.min(scroll, Math.max(0,totalHeight-height))); }
     @Override
     protected void extractWidgetRenderState(GuiGraphicsExtractor g, int mx, int my, float delta) {
-        // Classic vanilla container frame: raised pale top/left and recessed bottom/right.
-        g.fill(getX(),getY(),getRight(),getBottom(),0xFFC6C6C6);
-        g.fill(getX(),getY(),getRight(),getY()+2,0xFFFFFFFF);
-        g.fill(getX(),getY(),getX()+2,getBottom(),0xFFFFFFFF);
-        g.fill(getX(),getBottom()-2,getRight(),getBottom(),0xFF555555);
-        g.fill(getRight()-2,getY(),getRight(),getBottom(),0xFF555555);
-        g.enableScissor(getX()+2,getY()+2,getRight()-2,getBottom()-2);
+        // Dark stone / bevelled UI matching the supplied mockup.
+        g.fill(getX(),getY(),getRight(),getBottom(),0xFF595959);
+        g.fill(getX(),getY(),getRight(),getY()+2,0xFF919191);
+        g.fill(getX(),getY(),getX()+2,getBottom(),0xFF919191);
+        g.fill(getX(),getBottom()-2,getRight(),getBottom(),0xFF151515);
+        g.fill(getRight()-2,getY(),getRight(),getBottom(),0xFF151515);
+        g.fill(getX()+4,getY()+4,getRight()-14,getBottom()-4,0xFF202020);
+        g.enableScissor(getX()+3,getY()+3,getRight()-13,getBottom()-3);
         var font = Minecraft.getInstance().font;
         for (Tile tile : tiles) {
             int x=getX()+tile.x(), y=getY()+tile.y()-scroll;
-            if (y+Math.max(HEADER,CELL)<getY() || y>getBottom()) continue;
-            boolean hover = mx>=x && mx<x+tile.width() && my>=y && my<y+(tile.entry()==null?HEADER:CELL);
+            int h=tile.entry()==null?HEADER:CELL;
+            if (y+h<getY()+3 || y>getBottom()-3) continue;
+            boolean hover = mx>=x && mx<x+tile.width() && my>=y && my<y+h;
             if (tile.entry()==null) {
-                g.fill(x,y,x+tile.width(),y+HEADER-1,hover?0xFFE4E4E4:0xFFC6C6C6);
-                g.fill(x,y+HEADER-2,x+tile.width(),y+HEADER-1,0xFF888888);
-                String mark = expanded.contains(tile.group()) || !filter.isEmpty() ? "▼ " : "▶ ";
-                g.text(font, Component.literal(mark+tile.label()),x+5+Math.min(tile.depth()-1,4)*8,y+2,0xFF202020,false);
+                int indent = Math.min(Math.max(0,tile.depth()-1),3)*9;
+                int left=x+indent;
+                int right=x+tile.width();
+                // Rounded-looking pixel bevel: label bar, icon, arrow button.
+                g.fill(left,y+1,right,y+HEADER-2,0xFF090909);
+                g.fill(left+2,y+2,right-2,y+HEADER-4,hover?0xFF494949:0xFF343434);
+                g.fill(left+2,y+2,right-2,y+4,0xFF6E6E6E);
+                g.fill(left+2,y+HEADER-6,right-2,y+HEADER-4,0xFF161616);
+                int iconX=left+2;
+                g.fill(iconX,y,iconX+HEADER,y+HEADER,0xFF0C0C0C);
+                g.fill(iconX+2,y+2,iconX+HEADER-2,y+HEADER-2,0xFF303030);
+                // Placeholder icon (replace with folder image later).
+                g.fill(iconX+HEADER/2-4,y+HEADER/2-3,iconX+HEADER/2+4,y+HEADER/2+4,0xFFB5B5B5);
+                g.fill(iconX+HEADER/2-4,y+HEADER/2-3,iconX+HEADER/2+1,y+HEADER/2-1,0xFFE4E4E4);
+                boolean open=expanded.contains(tile.group()) || !filter.isEmpty();
+                int arrowX=right-HEADER+2;
+                g.fill(arrowX,y+2,right-2,y+HEADER-3,0xFF151515);
+                g.fill(arrowX+2,y+4,right-4,y+HEADER-5,0xFF4B4B4B);
+                g.text(font,Component.literal(open?"▼":"▶"),arrowX+6,y+8,0xFFEAEAEA,false);
+                String title=tile.label();
+                int avail=Math.max(20,arrowX-(iconX+HEADER+8));
+                if(font.width(title)>avail) title=font.plainSubstrByWidth(title,avail-10)+"…";
+                g.text(font,Component.literal(title),iconX+HEADER+6,y+8,0xFFE7E7E7,false);
             } else {
-                g.fill(x,y,x+tile.width()-2,y+CELL-2,0xFF373737); 
-                g.fill(x+1,y+1,x+tile.width()-3,y+CELL-3,hover?0xFFB6B6B6:0xFF8B8B8B);
-                ItemStack preview = source.copy();
-                if (!preview.isEmpty()) {
-                    preview.set(DataComponents.CUSTOM_NAME,Component.literal(tile.entry().name()));
-                    g.pose().pushMatrix();
-                    g.pose().translate(x+(tile.width()-30)/2.0f,y+3);
-                    g.pose().scale(1.875f,1.875f);
-                    g.item(preview,0,0);
-                    g.pose().popMatrix();
-                }
+                // Five-column custom item cards; provisional model/name until icon assets exist.
+                int right=x+tile.width()-2, bottom=y+CELL-2;
+                g.fill(x,y,right,bottom,0xFF080808);
+                g.fill(x+2,y+2,right-2,bottom-2,hover?0xFF555555:0xFF363636);
+                g.fill(x+2,y+2,right-2,y+4,0xFF747474);
+                g.fill(x+2,bottom-4,right-2,bottom-2,0xFF191919);
+                // A placeholder glyph instead of low-resolution item snapshots.
+                int cx=x+(tile.width()-2)/2, cy=y+12;
+                g.fill(cx-5,cy-5,cx+5,cy+5,0xFF9A9A9A);
+                g.fill(cx-5,cy-5,cx+4,cy-3,0xFFCFCFCF);
                 if (hover) g.setTooltipForNextFrame(Component.literal(tile.entry().name()),mx,my);
             }
         }
@@ -156,14 +176,15 @@ public final class ModelGridWidget extends AbstractWidget {
             int barHeight=Math.max(18,height*height/totalHeight);
             int track=height-barHeight;
             int pos=(int)(track*(scroll/(double)Math.max(1,totalHeight-height)));
-            g.fill(getRight()-9,getY(),getRight()-1,getBottom(),0xFF555555);
-            g.fill(getRight()-8,getY()+pos,getRight()-2,getY()+pos+barHeight,draggingScrollbar?0xFFE8E8E8:0xFFC6C6C6);
+            g.fill(getRight()-13,getY()+3,getRight()-2,getBottom()-3,0xFF101010);
+            g.fill(getRight()-11,getY()+5,getRight()-4,getBottom()-5,0xFF3E3E3E);
+            g.fill(getRight()-11,getY()+pos+3,getRight()-4,getY()+pos+barHeight+3,draggingScrollbar?0xFFDDDDDD:0xFFA7A7A7);
         }
     }
     private int maxScroll() { return Math.max(0, totalHeight - height); }
     private int barHeight() { return Math.max(18, height * height / Math.max(height, totalHeight)); }
     private boolean inScrollbar(double x, double y) {
-        return totalHeight > height && x >= getRight() - 9 && x < getRight()
+        return totalHeight > height && x >= getRight() - 13 && x < getRight()
                 && y >= getY() && y < getBottom();
     }
     private void moveScrollbar(double mouseY) {
